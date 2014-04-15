@@ -49,7 +49,7 @@ module Translatable
       def setup_translatable!(options)
         options[:table_name] ||= Translatable.translation_class.table_name
         options[:foreign_key] ||= 'record_id'
-        options[:conditions] ||= ''
+        options[:conditions] ||= {}
         options[:after_save] ||= false
         options[:before_save] ||= false
 
@@ -66,7 +66,7 @@ module Translatable
 
         has_many :translations, :class_name  => translation_class.name,
                  :foreign_key => options[:foreign_key],
-                 :conditions  => options[:conditions],
+                 :conditions  => conditions(options),
                  :dependent   => :destroy,
                  :extend      => HasManyExtensions,
                  :autosave    => false
@@ -74,6 +74,16 @@ module Translatable
         after_create :save_translations!
         after_update :save_translations!
       end
+      
+      def conditions(options)        
+        table_name = self.table_name      
+        proc { 
+          c = options[:conditions]
+          c = self.instance_eval(&c) if c.is_a?(Proc) 
+          c.merge(:scope => table_name, :locale => Translatable.locale)
+        }       
+      end
+      
     end
 
     module HasManyExtensions
