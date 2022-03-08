@@ -19,7 +19,7 @@ module Translatable
 
             # Add attribute to the list.
             self.translated_attribute_names << attr_name
-            if self.serialized_attributes.has_key?(attr_name) || options[:only]
+            if options[:only]
               self.translated_serialized_attributes[attr_name] = options[:only] ? options[:only] : []
             end
           end
@@ -64,9 +64,8 @@ module Translatable
 
         translation_class.table_name = options[:table_name]
 
-        has_many :translations, :class_name  => translation_class.name,
+        has_many :translations, conditions(options), :class_name  => translation_class.name,
                  :foreign_key => options[:foreign_key],
-                 :conditions  => conditions(options),
                  :dependent   => :destroy,
                  :extend      => HasManyExtensions,
                  :autosave    => false
@@ -80,8 +79,10 @@ module Translatable
         proc { 
           c = options[:conditions]
           c = self.instance_eval(&c) if c.is_a?(Proc) 
-          c.merge(:scope => table_name, :locale => Translatable.locale)
-        }       
+          c.merge!(:scope => table_name, :locale => Translatable.locale)
+
+          where(c)
+        }  
       end
       
     end

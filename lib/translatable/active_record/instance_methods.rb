@@ -11,7 +11,7 @@ module Translatable
         # Maintian Rails 3.0.x compatibility ..
         if base.method_defined?(:assign_attributes)
           base.class_eval %{
-            def assign_attributes(attributes, options = {})
+            def assign_attributes(attributes, *options)
               with_given_locale(attributes) { super }
             end
           }
@@ -33,8 +33,8 @@ module Translatable
       end
 
       # Always call the super method, the attribute is translatable and we asked a translated model
-      def write_attribute(name, value, options = {})
-        if translated?(name) && translate?
+      def write_attribute(name, value, options = {}, &block)
+        if r_translated?(name) && translate?
           options = {:locale => Translatable.locale}.merge(options)
 
           # We don't want to track any changes, but save the new value in a translation hash
@@ -58,7 +58,7 @@ module Translatable
       def reload(options = nil)
         @translate_me = false
         translation_caches.clear
-        translated_attribute_names.each { |name| @attributes.delete(name.to_s) }
+        translated_attribute_names.each { |name| @attributes.reset(name.to_s) }
         translatable.reset
         super(options)
       end
@@ -72,10 +72,10 @@ module Translatable
         !@translate_me.nil? && @translate_me
       end
 
-      def read_attribute(name, options = {})
+      def read_attribute(name, options = {}, &block)
         options = {:translated => true, :locale => Translatable.locale}.merge(options)
-        if translated?(name) and options[:translated]
-          serialized_value = super(name) if self.serialized_attributes.has_key?(name)
+        if r_translated?(name) and options[:translated]
+          serialized_value = super(name) if self.attributes.has_key?(name)
           if translate? && (value = translatable.fetch(options[:locale] || Translatable.locale, name, serialized_value))
             value
           else
@@ -86,7 +86,7 @@ module Translatable
         end
       end
 
-      def translated?(name)
+      def r_translated?(name)
         self.class.translated?(name)
       end
 
@@ -125,7 +125,7 @@ module Translatable
       def translation_for_serialized(locale, name, value, build_if_missing = false)
 
         unless translation_caches["#{locale}_#{name}"]
-          engine = self.serialized_attributes.has_key?(name) ? nil : JSON
+          engine = self.attributes.has_key?(name) ? nil : JSON
           deserialized_value = engine.nil? ? value : engine.load(value)
 
           only = self.translated_serialized_attributes[name.to_sym].map(&:to_s)
