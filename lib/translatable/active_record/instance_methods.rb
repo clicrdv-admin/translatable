@@ -63,7 +63,7 @@ module Translatable
         super(options)
       end
 
-      def save(*)
+      def save(**)
         @translate_me = false
         super
       end
