@@ -8,7 +8,7 @@ Gem::Specification.new do |s|
   s.authors     = ["Paul Bonaud", "Charly Poly"]
   s.email       = 'paul.bonaud@clicrdv.com'
   s.files       = Dir['LICENSE', 'README.md', 'lib/**/*']
-  s.add_runtime_dependency 'activesupport', '~> 6.1.3'
+  s.add_runtime_dependency 'activesupport', '~> 7.0'
   s.add_development_dependency 'database_cleaner', '~> 0.6.0', '>= 0.6.0'
   s.add_development_dependency 'mocha'
   s.add_development_dependency 'pathname_local'
